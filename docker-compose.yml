@@ -1,0 +1,16 @@
+services:
+  health-log:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - APP_PASSWORD=${APP_PASSWORD}
+      - AUTH_SECRET=${AUTH_SECRET}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - COOKIE_SECURE=${COOKIE_SECURE:-false}
+    volumes:
+      - health-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  health-data:

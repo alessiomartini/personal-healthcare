@@ -1,0 +1,13 @@
+node_modules/
+.next/
+out/
+build/
+.env
+.env.local
+*.log
+npm-debug.log*
+.DS_Store
+
+# personal health data lives here, never commit it
+/data/*.json
+!/data/.gitkeep
