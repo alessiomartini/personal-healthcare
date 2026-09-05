@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAll, insert, newId, clear } from "@/lib/db";
-import { callHealthAssistant, type ChatTurn } from "@/lib/anthropic";
+import { callHealthAssistant, type ChatTurn } from "@/lib/gemini";
 import { buildHealthContextSummary } from "@/lib/healthContext";
 import type { ChatMessage } from "@/lib/types";
 

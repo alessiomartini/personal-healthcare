@@ -1,7 +1,6 @@
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
-const DEFAULT_MODEL = "claude-sonnet-5";
-const MAX_TOKENS = 2000;
+const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
+const DEFAULT_MODEL = "gemini-2.5-flash";
+const MAX_OUTPUT_TOKENS = 2000;
 
 export interface ChatTurn {
   role: "user" | "assistant";
@@ -40,42 +39,52 @@ export async function callHealthAssistant(
   history: ChatTurn[],
   contextSummary: string
 ): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error(
-      "ANTHROPIC_API_KEY non configurata. Aggiungila al file .env (vedi .env.example)."
+      "GEMINI_API_KEY non configurata. Aggiungila al file .env (vedi .env.example)."
     );
   }
 
-  const system = `${ASSISTANT_SYSTEM_PROMPT}\n\n--- Dati recenti dell'utente (contesto, non ripeterlo integralmente all'utente) ---\n${contextSummary}`;
+  const systemInstruction = `${ASSISTANT_SYSTEM_PROMPT}\n\n--- Dati recenti dell'utente (contesto, non ripeterlo integralmente all'utente) ---\n${contextSummary}`;
+  const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
 
-  const res = await fetch(ANTHROPIC_API_URL, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": ANTHROPIC_VERSION,
-    },
-    body: JSON.stringify({
-      model: process.env.ANTHROPIC_MODEL || DEFAULT_MODEL,
-      max_tokens: MAX_TOKENS,
-      system,
-      messages: history.map((m) => ({ role: m.role, content: m.content })),
-    }),
-  });
+  const res = await fetch(
+    `${GEMINI_API_BASE}/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        contents: history.map((m) => ({
+          role: m.role === "assistant" ? "model" : "user",
+          parts: [{ text: m.content }],
+        })),
+        generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS },
+      }),
+    }
+  );
 
   if (!res.ok) {
     const errBody = await res.text().catch(() => "");
-    throw new Error(`Errore dall'API Anthropic (${res.status}): ${errBody.slice(0, 300)}`);
+    throw new Error(`Errore dall'API Gemini (${res.status}): ${errBody.slice(0, 300)}`);
   }
 
   const data = await res.json();
-  const text = data?.content
-    ?.filter((block: any) => block.type === "text")
-    ?.map((block: any) => block.text)
+  const candidate = data?.candidates?.[0];
+  const text = candidate?.content?.parts
+    ?.map((p: any) => p.text)
+    ?.filter(Boolean)
     ?.join("\n");
 
   if (!text) {
+    const blockReason = data?.promptFeedback?.blockReason;
+    const finishReason = candidate?.finishReason;
+    if (blockReason || (finishReason && finishReason !== "STOP")) {
+      throw new Error(
+        `L'assistente non ha potuto rispondere (motivo: ${blockReason || finishReason}). Prova a riformulare il messaggio.`
+      );
+    }
     throw new Error("Risposta vuota dall'assistente.");
   }
   return text;

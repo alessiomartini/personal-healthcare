@@ -17,7 +17,7 @@ di emergenza chiama sempre il numero di emergenza locale (in Italia: 112).
 - **Visite mediche**: medico, specializzazione, esito, prossimo controllo.
 - **Esami del sangue**: pannelli con singoli valori, unità, range di riferimento ed esito.
 - **Note**: idee, bug o funzioni da aggiungere al sito.
-- **Assistente AI**: chat basata su Claude (Anthropic) che, dati i sintomi e i tuoi dati recenti:
+- **Assistente AI**: chat basata su Gemini (Google, ha un livello gratuito) che, dati i sintomi e i tuoi dati recenti:
   - propone 2-4 opzioni concrete (es. riposo, farmaco da banco, automonitoraggio, contattare il
     medico) con **pro e contro** per ciascuna;
   - spiega il meccanismo d'azione dei farmaci che nomina;
@@ -43,14 +43,16 @@ di emergenza chiama sempre il numero di emergenza locale (in Italia: 112).
 ## Requisiti
 
 - Node.js 20+
-- Una chiave API Anthropic (solo se vuoi usare l'assistente AI) — [console.anthropic.com](https://console.anthropic.com/)
+- Una chiave API Gemini gratuita (solo se vuoi usare l'assistente AI) — creala su
+  [Google AI Studio](https://aistudio.google.com/apikey) con un account Google, senza carta di
+  credito, poi incollala in `GEMINI_API_KEY`
 
 ## Avvio in locale
 
 ```bash
 npm install
 cp .env.example .env
-# apri .env e imposta APP_PASSWORD, AUTH_SECRET (es. `openssl rand -hex 32`) e ANTHROPIC_API_KEY
+# apri .env e imposta APP_PASSWORD, AUTH_SECRET (es. `openssl rand -hex 32`) e GEMINI_API_KEY
 npm run dev
 ```
 
@@ -78,8 +80,8 @@ I dati vengono salvati in un volume Docker persistente (`health-data`), non nell
 | ------------------- | ------------ | ------------------------------------------------------------------- |
 | `APP_PASSWORD`      | sì           | Password per accedere al sito.                                      |
 | `AUTH_SECRET`       | sì           | Segreto usato per firmare il cookie di sessione. Generalo random.    |
-| `ANTHROPIC_API_KEY` | solo per l'assistente AI | Chiave API Claude, usata dall'assistente sanitario.    |
-| `ANTHROPIC_MODEL`   | no           | Modello Claude da usare (default `claude-sonnet-5`).                |
+| `GEMINI_API_KEY`    | solo per l'assistente AI | Chiave API Gemini (gratuita), usata dall'assistente sanitario. |
+| `GEMINI_MODEL`      | no           | Modello Gemini da usare (default `gemini-2.5-flash`).               |
 | `DATA_DIR`          | no           | Cartella dove salvare `db.json` (default `./data`).                  |
 | `COOKIE_SECURE`     | no           | Imposta `true` solo se il sito è servito via HTTPS. Lascialo `false`/non impostato per un uso su rete privata via HTTP (es. Tailscale), altrimenti il cookie di login non verrà mai inviato dal browser. |
 
@@ -103,10 +105,12 @@ Google.
 
 ## Note su costi e limiti dell'assistente AI
 
-Ogni messaggio inviato all'assistente chiama l'API di Anthropic con la tua chiave personale
-(costi a consumo, tipicamente centesimi per conversazione con Claude Sonnet). Se non imposti
-`ANTHROPIC_API_KEY`, tutto il resto del sito funziona normalmente: solo la pagina Assistente
-mostrerà un errore.
+Ogni messaggio inviato all'assistente chiama l'API Gemini con la tua chiave personale. Il livello
+gratuito di Gemini (modello `gemini-2.5-flash`) è pensato per un uso come questo: nessuna carta
+di credito richiesta, con un limite di richieste al minuto/al giorno più che sufficiente per un
+uso personale (i limiti esatti sono indicati nella tua [Google AI Studio](https://aistudio.google.com/)
+e possono cambiare nel tempo). Se non imposti `GEMINI_API_KEY`, tutto il resto del sito funziona
+normalmente: solo la pagina Assistente mostrerà un errore.
 
 ## Backup dei tuoi dati
 
@@ -117,4 +121,4 @@ uno storage cifrato di tua fiducia. Trattalo come dato sensibile.
 ## Stack tecnico
 
 Next.js (App Router) + TypeScript + Tailwind CSS, storage su file JSON (nessun database esterno
-da configurare), grafici con Recharts, assistente AI via API Anthropic (Claude).
+da configurare), grafici con Recharts, assistente AI via API Google Gemini.
