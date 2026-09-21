@@ -122,3 +122,10 @@ uno storage cifrato di tua fiducia. Trattalo come dato sensibile.
 
 Next.js (App Router) + TypeScript + Tailwind CSS, storage su file JSON (nessun database esterno
 da configurare), grafici con Recharts, assistente AI via API Google Gemini.
+
+## Per chi sviluppa
+
+Vedi [`CLAUDE.md`](./CLAUDE.md) per le istruzioni pratiche di verifica (lint/build) e le
+convenzioni del repo, e [`FUTURE-ARCHITECTURE.md`](./FUTURE-ARCHITECTURE.md) per le idee aperte,
+gli aggiornamenti di dipendenze rimandati e le decisioni di design prese (es. perché la sezione
+Note resta locale).
